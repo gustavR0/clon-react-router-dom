@@ -1,51 +1,34 @@
-
-import { useEffect, useState } from 'react'
 import './App.css'
-import { EVENTS } from './consts'
-import { navigate } from './Link'
+import { Router } from './Router'
+import Page404 from './pages/404'
+import Search from './pages/Search'
+import { Route } from './Route'
+import { lazy, Suspense } from 'react'
 
-const NAVIGATION_STATE = 'pushsatate'
+// Evita que se cargue javascript que no se usa de en este caso el componente About
+const LazyAboutPage = lazy(() => import('./pages/About.jsx'))
+const LazyHomePage = lazy(() => import('./pages/Home.jsx'))
 
-function HomePages () {
-  return (
-    <div className='App'>
-      <h1>Home</h1>
-      <button onClick={() => navigate('/about')}>Go To About</button>
-    </div>
-  )
-}
-
-function AboutPage () {
-  return (
-    <div className='App'>
-      <h1>About</h1>
-      <button onClick={() => navigate('/')}>Go To Home</button>
-    </div>
-  )
-}
+const routes = [
+  {
+    path: '/:lang/about',
+    Component: LazyAboutPage
+  },
+  {
+    path: '/search/:query',
+    Component: Search
+  }
+]
 
 function App () {
-  const [currentPath, setCurrentPath] = useState(window.location.pathname)
-
-  useEffect(() => {
-    const onLocationChange = () => {
-      setCurrentPath(window.location.pathname)
-    }
-
-    window.addEventListener(NAVIGATION_STATE, onLocationChange)
-
-    window.addEventListener(EVENTS.POPSTATE, onLocationChange)
-
-    return () => {
-      window.removeEventListener(NAVIGATION_STATE, onLocationChange)
-      window.removeEventListener(EVENTS.POPSTATE, onLocationChange)
-    }
-  }, [])
-
   return (
-    <main className='App'>
-      {currentPath === '/' && (<HomePages />)}
-      {currentPath === '/about' && (<AboutPage />)}
+    <main>
+      <Suspense fallback={<div>Loading ...</div>}>
+        <Router routes={routes} defaultComponent={Page404}>
+          <Route path='/' Component={LazyHomePage} />
+          <Route path='/about' Component={LazyAboutPage} />
+        </Router>
+      </Suspense>
     </main>
   )
 }
